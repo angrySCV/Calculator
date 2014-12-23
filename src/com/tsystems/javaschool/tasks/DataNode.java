@@ -9,6 +9,7 @@ public class DataNode {
 	public DataNode leftNode;
 	public DataNode rightNode;
 	public Double   result;
+	public int priority;
 
 	public DataNode (DataNode leftNode, char operator, DataNode rightNode) {
 		this.operator = operator;
