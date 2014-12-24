@@ -23,7 +23,7 @@ public class DataNode {
 	}
 
 	public double getResult (char operator, double left, double right) {
-		if (result == null) {
+		if  ((result == null)||((leftNode!=null)&(rightNode!=null))) {
 			switch (operator) {
 				case '-':
 					result = Subtract(left, right);
@@ -59,7 +59,7 @@ public class DataNode {
 	}
 
 	public double getResult () {
-		if (result == null) {
+		if ((result == null)||((leftNode!=null)&(rightNode!=null))){
 			getResult(operator, leftNode.getResult(), rightNode.getResult());
 		}
 		return result;

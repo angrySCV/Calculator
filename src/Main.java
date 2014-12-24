@@ -7,8 +7,7 @@ public class Main {
 
 		Calculator calculator = new CalculatorImpl();
 
-		System.out.println(calculator.evaluate("28394.2+475.5-300*100*3+38485.9666666/200*500.3+345.3"));
-
+		System.out.println(calculator.evaluate("7*6/2+8"));
 
 	}
 

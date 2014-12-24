@@ -12,11 +12,9 @@ import java.util.ArrayList;
 public class CalculatorImpl implements Calculator {
 	ArrayList<DataNode> allMyData = new ArrayList<DataNode>();
 	private static int pointer = 0; // использую для парсера, как указатель на каком элементе сейчас находимся
-
+	private static char operator;
 	public CalculatorImpl () {
 	}
-
-
 	@Override
 	public String evaluate (String statement) {
 
@@ -25,39 +23,43 @@ public class CalculatorImpl implements Calculator {
 		// каждый такой датаNоде состоит из 2х ссылк на 2 других дата нода, из одного поля с типом необходимой операцией,
 		// и одного поля - result.
 		// в качестве листьев дерева - используются датаNоды без ссылок на другие датаNоды только с значением result
-
-		statement = "0+" + statement; // небольшой хак чтоб гарантированно первый элемент был числом, а не скобкой например. изза этого также пустое множество возвращает ноль, что тоже неплохо)
-		DataNode dataNode1 = new DataNode(parseData(statement));
+		DataNode dataNode1;
+		DataNode dataNode2;
+		DataNode rootDataNode;
+		DataNode saveEntryPoint = null;
+		statement = "0+0+" + statement; // небольшой хак чтоб гарантированно правильно начать строить дерево, что решает много проблем с возможным некоректным стартом алгоритма.
+		dataNode1 = new DataNode(parseData(statement));
 		allMyData.add(dataNode1);
+		parseOperator(statement);
 		while (pointer < statement.length()) {
-			char operator = parseOperator(statement);
-//			if (operator == '(') {
-//				// если встречаем открывающиеся скобки - начинаем строить новое дерево, в конце найдя закрывающую скобку
-//				// подвесим это дерево к старому на точке входа в новое.
-//				DataNode saveEntryPoint = new DataNode(); // создаем пустую ноду, вместо которой позже вставим новую ветку дерева
-//				DataNode rootDataNode = new DataNode(dataNode1, operator, saveEntryPoint);
-//				DataNode startNewNode = new DataNode(parseData(statement)); // создаем новую независимую ветку дерева
-//				dataNode1 = startNewNode; // после этого дерево будет строится по независимому элементу
-//			}
-//			if (operator == ')') {
-//				// заканчиваем строить новое независимое дерево - подвесим это дерево к старому на точке входа в новое.
-//				saveEntryPoint = lastNodeRoot; // подвешиваем всё дерево к точке входа
-//				dataNode1 = saveEntryPoint; // продолжаем работать со старым деревом
-//			}
-			DataNode dataNode2 = new DataNode(parseData(statement));
+			if (statement.charAt(pointer) == '(') {
+				// если встречаем открывающиеся скобки - начинаем строить новое дерево, найдя закрывающую скобку
+				// подвесим это дерево к старому.
+				pointer++;
+				saveEntryPoint = dataNode1; // сохраняем месту куда потом вставим новую ветку дерева
+				DataNode startNewNode = new DataNode(parseData(statement)); // начало новой независимой ветки дерева
+				parseOperator(statement); // оператор в новом дереве
+				dataNode1 = startNewNode; // после этого в основном теле цикла дерево будет строится от этого нового элемента
+			}
+			if ((operator == ')') & !(saveEntryPoint == null)) {
+				// заканчили строить новое дерево - подвесим это дерево к старому на точке входа в новое.
+				saveEntryPoint.setRightNode(dataNode1);
+				dataNode1 = saveEntryPoint; // продолжаем работать со старым деревом
+				if (pointer < statement.length()) parseOperator(statement);
+			}
+			dataNode2 = new DataNode(parseData(statement));
 			allMyData.add(dataNode2);
-			DataNode rootDataNode = new DataNode(dataNode1, operator, dataNode2);
+			rootDataNode = new DataNode(dataNode1, operator, dataNode2);
 			allMyData.add(rootDataNode);
 			if (operator == '*' || operator == '/') { // перевешиваем узел с умножением чтоб он отдельно выполнился
 				rootDataNode.setLeftNode(dataNode1.getRightNode());
 				dataNode1.setRightNode(rootDataNode);
 			} else dataNode1 = rootDataNode;
 //			upNodePriority(); // чтоб изменить приоритет операции перевешиваем Nodu
-
+			parseOperator(statement);
 		}
 		// вызывая result для корневого элемента - (если результат не известен) просходит его рекурсивное вычисление -
 		// по всем связанным веткам
-
 		Double result = allMyData.get(allMyData.size() - 1).getResult();
 
 // вывод в требуемом формате с округлением до 4х знаков после запятой
@@ -92,10 +94,11 @@ public class CalculatorImpl implements Calculator {
 		return myNum;
 	}
 
-	private char parseOperator (String statement) {
-		char operator = statement.charAt(pointer);
+	private void parseOperator (String statement) {
+		if (pointer<statement.length()) {
+		operator = statement.charAt(pointer);
 		pointer++;
-		return operator;
+		}
 	}
 
 	private void upNodePriority () {
