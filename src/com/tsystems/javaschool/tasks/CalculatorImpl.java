@@ -20,27 +20,31 @@ public class CalculatorImpl implements Calculator {
 
 	@Override
 	public String evaluate (String inputData) {
+		try {
 		statement = "0+0+" + inputData;
 		// небольшой хак чтоб гарантированно правильно начать строить дерево,
-		// что решает много проблем с возможным некоректным стартом алгоритма
+		// что решает проблемы с возможным некоректным стартом алгоритма
 
-		DataNode dataNode = new DataNode(parseData());
-		// первое что делаю - парсю число, через метод parseData()
+			DataNode dataNode = new DataNode(parseData());
+			// первое что делаю - парсю число, через метод parseData()
 
-		getNextCommand(dataNode);
-		// вызываю комманду парсинга оператора, и дальше рекурсивно опять вызываю построение нод
-		// на основе отпарсеных данных строю дерево из объектов (dataNode) -
+			getNextCommand(dataNode);
+			// вызываю комманду парсинга оператора, и дальше рекурсивно опять вызываю построение нод
+			// постепенно строю дерево из объектов (dataNode) -
 
-		// каждый такой датаNоде состоит из 2х ссылк на 2 других дата нода, из одного поля с типом необходимой операцией,
-		// и одного поля - result.
-		// в качестве листьев дерева - используются датаNоды без ссылок на другие датаNоды только с значением result
-		Double result = mainTreeRoot.getResult();
-		// вызывая result для корневого элемента - (если результат в этом Nоде не известен) просходит его рекурсивное вычисление -
-		// по всем связанным веткам
+			// каждый такой датаNоде состоит из 2х ссылк на 2 других дата нода, из одного поля с типом необходимой операцией,
+			// и одного поля - result.
+			// в качестве листьев дерева - используются теже самые датаNоды у которых ссылоки на другие датаNоды - null но есть значение result
+			Double result = mainTreeRoot.getResult();
+
+			// вызывая result для корневого элемента - (если результат в этом Nоде не известен) просходит его рекурсивное вычисление -
+			// по всем связанным веткам
 		DecimalFormat df = new DecimalFormat("#.####");
 		// вывод в требуемом формате с округлением до 4х знаков после запятой
 		return df.format(result);
-
+		} catch (Exception e) {
+			return "null"; // при некорректных данных возвращает null
+		}
 	}
 
 	public char getNextCommand (DataNode leftNode) {
@@ -50,6 +54,8 @@ public class CalculatorImpl implements Calculator {
 		char operator = parseOperator();
 		switch (operator) {
 			case '(':
+				// сюда алгоритм не заходит, перехватывают в другом месте
+				// нужно сделать - очередь с приоритетами. но чую не успею нормально все реализовать - так что пока без глубокой раздачи приоритетов, со скобками может не вполне корректно работать
 				if (hasNextOpenBracked()) {
 					pointer++;
 					rootDataNode = startNewNode();
@@ -68,8 +74,9 @@ public class CalculatorImpl implements Calculator {
 					pointer++;
 					saveEntryPoint = mainTreeRoot;
 					rightNode = new DataNode(parseData());
-					getNextCommand(rightNode);   // запустили парситься новое дерево с новым главным корнем
+					getNextCommand(rightNode);   // запустили парсить новое дерево с новым главным корнем
 					mainTreeRoot = new DataNode(saveEntryPoint, operator, mainTreeRoot); // связываем корни старого и нового дерева
+					if (hasNextOperator()) getNextCommand(mainTreeRoot);
 				} else {
 					rootDataNode = addingNodeTо(leftNode, operator);
 					mainTreeRoot = changeTree(rootDataNode);
@@ -84,6 +91,7 @@ public class CalculatorImpl implements Calculator {
 					rightNode = new DataNode(parseData());
 					getNextCommand(rightNode);   // запустили парситься новое дерево с новым главным корнем
 					mainTreeRoot = new DataNode(saveEntryPoint, operator, mainTreeRoot);
+					if (hasNextOperator()) getNextCommand(mainTreeRoot);
 				} else {
 					rootDataNode = addingNodeTо(leftNode, operator);
 					mainTreeRoot = rootDataNode;
@@ -94,13 +102,7 @@ public class CalculatorImpl implements Calculator {
 				closeNode();
 				break;
 			default:
-				System.out.println("null"); //при любом некоректном операторе или комманде - выводим нул
-
-				// вызывая result для корневого элемента - (если результат в этом Nоде не известен)
-				// просходит его рекурсивное вычисление -
-				// по всем связанным веткам
-//				Double result = rootDataNode.getResult();
-				// вывод в требуемом формате с округлением до 4х знаков после запятой
+				System.out.println("null"); //при некоректном операторе или комманде - выводим нул
 		}
 		return operator;
 	}

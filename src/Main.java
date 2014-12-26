@@ -7,8 +7,8 @@ public class Main {
 
 		Calculator calculator = new CalculatorImpl();
 
-		System.out.println(calculator.evaluate("100*100+300+40*2-5000*2"));
-
+		System.out.println(calculator.evaluate("(1+38)*4-5"));
+// простая проверка примера - ожидаемый результат 151
 	}
 
 }
