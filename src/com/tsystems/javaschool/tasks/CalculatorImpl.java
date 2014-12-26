@@ -12,63 +12,135 @@ import java.util.ArrayList;
 public class CalculatorImpl implements Calculator {
 	ArrayList<DataNode> allMyData = new ArrayList<DataNode>();
 	private static int pointer = 0; // использую для парсера, как указатель на каком элементе сейчас находимся
-	private static char operator;
+	private static String   statement;
+	private static DataNode mainTreeRoot;
+
 	public CalculatorImpl () {
 	}
-	@Override
-	public String evaluate (String statement) {
 
-		// первое что делаю - парсю страку, через метод parseData()
+	@Override
+	public String evaluate (String inputData) {
+		statement = "0+0+" + inputData;
+		// небольшой хак чтоб гарантированно правильно начать строить дерево,
+		// что решает много проблем с возможным некоректным стартом алгоритма
+
+		DataNode dataNode = new DataNode(parseData());
+		// первое что делаю - парсю число, через метод parseData()
+
+		getNextCommand(dataNode);
+		// вызываю комманду парсинга оператора, и дальше рекурсивно опять вызываю построение нод
 		// на основе отпарсеных данных строю дерево из объектов (dataNode) -
+
 		// каждый такой датаNоде состоит из 2х ссылк на 2 других дата нода, из одного поля с типом необходимой операцией,
 		// и одного поля - result.
 		// в качестве листьев дерева - используются датаNоды без ссылок на другие датаNоды только с значением result
-		DataNode dataNode1;
-		DataNode dataNode2;
-		DataNode rootDataNode;
-		DataNode saveEntryPoint = null;
-		statement = "0+0+" + statement; // небольшой хак чтоб гарантированно правильно начать строить дерево, что решает много проблем с возможным некоректным стартом алгоритма.
-		dataNode1 = new DataNode(parseData(statement));
-		allMyData.add(dataNode1);
-		parseOperator(statement);
-		while (pointer < statement.length()) {
-			if (statement.charAt(pointer) == '(') {
-				// если встречаем открывающиеся скобки - начинаем строить новое дерево, найдя закрывающую скобку
-				// подвесим это дерево к старому.
-				pointer++;
-				saveEntryPoint = dataNode1; // сохраняем месту куда потом вставим новую ветку дерева
-				DataNode startNewNode = new DataNode(parseData(statement)); // начало новой независимой ветки дерева
-				parseOperator(statement); // оператор в новом дереве
-				dataNode1 = startNewNode; // после этого в основном теле цикла дерево будет строится от этого нового элемента
-			}
-			if ((operator == ')') & !(saveEntryPoint == null)) {
-				// заканчили строить новое дерево - подвесим это дерево к старому на точке входа в новое.
-				saveEntryPoint.setRightNode(dataNode1);
-				dataNode1 = saveEntryPoint; // продолжаем работать со старым деревом
-				if (pointer < statement.length()) parseOperator(statement);
-			}
-			dataNode2 = new DataNode(parseData(statement));
-			allMyData.add(dataNode2);
-			rootDataNode = new DataNode(dataNode1, operator, dataNode2);
-			allMyData.add(rootDataNode);
-			if (operator == '*' || operator == '/') { // перевешиваем узел с умножением чтоб он отдельно выполнился
-				rootDataNode.setLeftNode(dataNode1.getRightNode());
-				dataNode1.setRightNode(rootDataNode);
-			} else dataNode1 = rootDataNode;
-//			upNodePriority(); // чтоб изменить приоритет операции перевешиваем Nodu
-			parseOperator(statement);
-		}
-		// вызывая result для корневого элемента - (если результат не известен) просходит его рекурсивное вычисление -
+		Double result = mainTreeRoot.getResult();
+		// вызывая result для корневого элемента - (если результат в этом Nоде не известен) просходит его рекурсивное вычисление -
 		// по всем связанным веткам
-		Double result = allMyData.get(allMyData.size() - 1).getResult();
-
-// вывод в требуемом формате с округлением до 4х знаков после запятой
 		DecimalFormat df = new DecimalFormat("#.####");
+		// вывод в требуемом формате с округлением до 4х знаков после запятой
 		return df.format(result);
+
 	}
 
-	private double parseData (String statement) {
-		// парсим строку
+	public char getNextCommand (DataNode leftNode) {
+		DataNode rootDataNode;
+		DataNode rightNode;
+		DataNode saveEntryPoint = null;
+		char operator = parseOperator();
+		switch (operator) {
+			case '(':
+				if (hasNextOpenBracked()) {
+					pointer++;
+					rootDataNode = startNewNode();
+					getNextCommand(rootDataNode);
+				} else {
+					rootDataNode = addingNodeTо(leftNode, operator);
+					getNextCommand(rootDataNode);
+				}
+				break;
+			case ')':
+				mainTreeRoot = leftNode;
+				break;
+			case '*':
+			case '/':
+				if (hasNextOpenBracked()) {
+					pointer++;
+					saveEntryPoint = mainTreeRoot;
+					rightNode = new DataNode(parseData());
+					getNextCommand(rightNode);   // запустили парситься новое дерево с новым главным корнем
+					mainTreeRoot = new DataNode(saveEntryPoint, operator, mainTreeRoot); // связываем корни старого и нового дерева
+				} else {
+					rootDataNode = addingNodeTо(leftNode, operator);
+					mainTreeRoot = changeTree(rootDataNode);
+					getNextCommand(mainTreeRoot);
+				}
+				break;
+			case '+':
+			case '-':
+				if (hasNextOpenBracked()) {
+					pointer++;
+					saveEntryPoint = mainTreeRoot;
+					rightNode = new DataNode(parseData());
+					getNextCommand(rightNode);   // запустили парситься новое дерево с новым главным корнем
+					mainTreeRoot = new DataNode(saveEntryPoint, operator, mainTreeRoot);
+				} else {
+					rootDataNode = addingNodeTо(leftNode, operator);
+					mainTreeRoot = rootDataNode;
+					getNextCommand(mainTreeRoot);
+				}
+				break;
+			case 'e': //сигнал конеца строки
+				closeNode();
+				break;
+			default:
+				System.out.println("null"); //при любом некоректном операторе или комманде - выводим нул
+
+				// вызывая result для корневого элемента - (если результат в этом Nоде не известен)
+				// просходит его рекурсивное вычисление -
+				// по всем связанным веткам
+//				Double result = rootDataNode.getResult();
+				// вывод в требуемом формате с округлением до 4х знаков после запятой
+		}
+		return operator;
+	}
+
+	public DataNode startNewNode () {
+		DataNode newDataNode = new DataNode(parseData());
+		DataNode rootDataNode = new DataNode(newDataNode, getNextCommand(newDataNode), new DataNode(parseData()));
+		return rootDataNode;
+	}
+
+	public void closeNode () {
+
+	}
+
+	public boolean hasNextOperator () {
+		if (pointer < statement.length()) {
+			switch (statement.charAt(pointer)) {
+				case '+':
+				case '-':
+				case '*':
+				case '/':
+					return true;
+				default:
+					return false;
+			}
+		}
+		return false;
+	}
+
+	public DataNode addingNodeTо (DataNode leftNode, char operator) {
+		return new DataNode(leftNode, operator, new DataNode(parseData()));
+	}
+
+	public boolean hasNextOpenBracked () {
+		if ((pointer < statement.length()) && (statement.charAt(pointer) == '(')) return true;
+		else return false;
+	}
+
+	public double parseData () {
+		// получение следующего числа из строки
 		int dataCount = 0;
 		int dataStart = pointer;
 		Double myNum = 0.0;
@@ -94,15 +166,22 @@ public class CalculatorImpl implements Calculator {
 		return myNum;
 	}
 
-	private void parseOperator (String statement) {
-		if (pointer<statement.length()) {
-		operator = statement.charAt(pointer);
-		pointer++;
-		}
+	public char parseOperator () {
+		//получение следующего оператора из строки
+		char operator;
+		if (pointer < statement.length()) {
+			operator = statement.charAt(pointer);
+			pointer++;
+		} else operator = 'e';
+		return operator;
 	}
 
-	private void upNodePriority () {
-
+	public DataNode changeTree (DataNode mainTreeRoot) {
+		//перевешиваем ветки дерева чтоб изменить очерёдность операций
+		DataNode tempTree = mainTreeRoot.getLeftNode();
+		mainTreeRoot.setLeftNode(mainTreeRoot.getLeftNode().getRightNode());
+		tempTree.setRightNode(mainTreeRoot);
+		return tempTree;
 	}
 
 

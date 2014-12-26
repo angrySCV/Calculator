@@ -9,21 +9,24 @@ public class DataNode {
 	public DataNode leftNode;
 	public DataNode rightNode;
 	public Double   result;
-	public int priority;
+	public int      priority;
+	public int      nodeNumber;
+	public static int      numberOfNode;
 
 	public DataNode (DataNode leftNode, char operator, DataNode rightNode) {
 		this.operator = operator;
 		this.leftNode = leftNode;
 		this.rightNode = rightNode;
-
+		this.nodeNumber = numberOfNode++;
 	}
 
 	DataNode (double result) {
 		this.result = result;
+		this.nodeNumber = numberOfNode++;
 	}
 
 	public double getResult (char operator, double left, double right) {
-		if  ((result == null)||((leftNode!=null)&(rightNode!=null))) {
+		if ((result == null) | ((leftNode != null) & (rightNode != null))) {
 			switch (operator) {
 				case '-':
 					result = Subtract(left, right);
@@ -59,7 +62,7 @@ public class DataNode {
 	}
 
 	public double getResult () {
-		if ((result == null)||((leftNode!=null)&(rightNode!=null))){
+		if ((result == null) | ((leftNode != null) & (rightNode != null))) {
 			getResult(operator, leftNode.getResult(), rightNode.getResult());
 		}
 		return result;
