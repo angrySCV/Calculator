@@ -1,4 +1,4 @@
-import com.tsystems.javaschool.tasks.Subsequence;
+package com.tsystems.javaschool.tasks;
 
 import java.util.List;
 

@@ -11,22 +11,26 @@ import java.util.ArrayList;
 
 public class CalculatorImpl implements Calculator {
 	ArrayList<DataNode> allMyData = new ArrayList<DataNode>();
-	private static int pointer = 0; // использую для парсера, как указатель на каком элементе сейчас находимся
+	private static int      pointer; // использую для парсера, как указатель на каком элементе сейчас находимся
 	private static String   statement;
 	private static DataNode mainTreeRoot;
 
 	public CalculatorImpl () {
+		this.pointer = 0;
+		this.statement = "";
+		mainTreeRoot = null;
 	}
 
 	@Override
 	public String evaluate (String inputData) {
 		try {
-		statement = "0+0+" + inputData;
-		// небольшой хак чтоб гарантированно правильно начать строить дерево,
-		// что решает проблемы с возможным некоректным стартом алгоритма
+			statement = "0+0+" + inputData;
+			// небольшой хак чтоб гарантированно правильно начать строить дерево,
+			// что решает проблемы с возможным некоректным стартом алгоритма
 
 			DataNode dataNode = new DataNode(parseData());
-			// первое что делаю - парсю число, через метод parseData()
+			// первое что делаю - парсю число, через метод parseData() - поскольку работаю только с одной и тойже строкой
+			// то передачу строки в метод parse - не происходит - вместо этого внутри метода вызывается статическая строка которую парсю
 
 			getNextCommand(dataNode);
 			// вызываю комманду парсинга оператора, и дальше рекурсивно опять вызываю построение нод
@@ -39,9 +43,9 @@ public class CalculatorImpl implements Calculator {
 
 			// вызывая result для корневого элемента - (если результат в этом Nоде не известен) просходит его рекурсивное вычисление -
 			// по всем связанным веткам
-		DecimalFormat df = new DecimalFormat("#.####");
-		// вывод в требуемом формате с округлением до 4х знаков после запятой
-		return df.format(result);
+			DecimalFormat df = new DecimalFormat("#.####");
+			// вывод в требуемом формате с округлением до 4х знаков после запятой
+			return df.format(result);
 		} catch (Exception e) {
 			return "null"; // при некорректных данных возвращает null
 		}
@@ -50,7 +54,7 @@ public class CalculatorImpl implements Calculator {
 	public char getNextCommand (DataNode leftNode) {
 		DataNode rootDataNode;
 		DataNode rightNode;
-		DataNode saveEntryPoint = null;
+		DataNode saveEntryPoint;
 		char operator = parseOperator();
 		switch (operator) {
 			case '(':

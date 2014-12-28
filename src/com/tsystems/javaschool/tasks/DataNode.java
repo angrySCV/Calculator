@@ -2,6 +2,8 @@ package com.tsystems.javaschool.tasks;
 
 /**
  * Created by AngrySCV on 22.12.14.
+ * объект дата ноды - для калькулятора
+ * содержит одну бинарную операцию с 2мя элементами
  * https://github.com/angrySCV
  */
 public class DataNode {
@@ -9,8 +11,9 @@ public class DataNode {
 	public DataNode leftNode;
 	public DataNode rightNode;
 	public Double   result;
-	public int      priority;
-	public int      nodeNumber;
+//	public int      priority;
+//  для работы с приоритетами - пока не делал
+	public int      nodeNumber; // для дебага, чтоб видеть что за ноды
 	public static int      numberOfNode;
 
 	public DataNode (DataNode leftNode, char operator, DataNode rightNode) {
