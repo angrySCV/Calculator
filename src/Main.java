@@ -14,7 +14,6 @@ public class Main {
 		System.out.println(c.evaluate("7*6/2+8")); // Результат: 29
 		c = new CalculatorImpl();
 		System.out.println(c.evaluate("-12)1//(")); // Результат: null
-        // простая проверка примера - ожидаемый результат 151
 
 		System.out.println("-----   задача 2    -------");
 		Subsequence s = new SubsequenceImpl();
