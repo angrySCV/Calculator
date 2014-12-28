@@ -1,3 +1,5 @@
+package com.tsystems.javaschool.tasks;
+
 import com.tsystems.javaschool.tasks.DuplicateFinder;
 
 import java.io.*;
